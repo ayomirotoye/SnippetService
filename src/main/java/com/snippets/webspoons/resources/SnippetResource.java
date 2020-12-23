@@ -5,6 +5,7 @@ import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,18 +17,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.snippets.webspoons.models.Snippet;
-import com.snippets.webspoons.services.SnippetService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.snippets.webspoons.services.SnippetDao;
 
 @RequestMapping("/snippets")
 @RestController
-@Slf4j
-@RequiredArgsConstructor
 public class SnippetResource {
 
-	private final SnippetService snippetService;
+	@Autowired
+	private SnippetDao snippetDao;
 
 	private final String resourcePath = "/snippets";
 
@@ -35,13 +32,13 @@ public class SnippetResource {
 	@PostMapping
 	public ResponseEntity<?> store(@Valid @RequestBody Snippet snippet) {
 		try {
-			snippet = snippetService.createSnippet(snippet, resourcePath);
-			if(snippet.getId() == null) {
+			snippet = snippetDao.createSnippet(snippet, resourcePath);
+			if(snippet == null) {
 				return new ResponseEntity<>("Snippet already exist", HttpStatus.BAD_REQUEST);
 			}
 			return new ResponseEntity<>(snippet, HttpStatus.CREATED);
 		} catch (Exception e) {
-			log.error("ERROR OCCURRED>>>", e);
+			e.printStackTrace();
 		}
 		return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
 	}
@@ -50,14 +47,14 @@ public class SnippetResource {
 	@GetMapping("/{uri}")
 	public ResponseEntity<?> read(@NotBlank @PathVariable String uri) {
 		try {
-			Optional<Snippet> snippet = snippetService.findSnippet(uri);
+			Optional<Snippet> snippet = snippetDao.findSnippet(uri);
 			if (snippet.isPresent()) {
 				Snippet gottenSnippet = snippet.get();
 				gottenSnippet.setExpires_in(null);
 				return new ResponseEntity<>(snippet.get(), HttpStatus.OK);
 			}
 		} catch (Exception e) {
-			log.error("ERROR OCCURRED>>>", e);
+			e.printStackTrace();
 		}
 		return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
 	}
@@ -67,14 +64,14 @@ public class SnippetResource {
 	@PutMapping("/like/{uri}")
 	public ResponseEntity<?> likeSnippet(@NotBlank @PathVariable String uri) {
 		try {
-			Optional<Snippet> snippet = snippetService.likeSnippet(uri);
+			Optional<Snippet> snippet = snippetDao.likeSnippet(uri);
 			if (snippet.isPresent()) {
 				Snippet gottenSnippet = snippet.get();
 				gottenSnippet.setExpires_in(null);
 				return new ResponseEntity<>(snippet.get(), HttpStatus.OK);
 			}
 		} catch (Exception e) {
-			log.error("ERROR OCCURRED>>>", e);
+			e.printStackTrace();
 		}
 		return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
 	}
